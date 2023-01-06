@@ -245,7 +245,6 @@ class dilated_inception(nn.Module):
         self.tconv = nn.ModuleList()
         self.kernel_set = [2,2,2,2]
         cout = int(cout/len(self.kernel_set))
-        print("cout:",cout)
         for kern in self.kernel_set:
             self.tconv.append(nn.Conv2d(cin,cout,(1,kern),dilation=(1,dilation_factor)))
 
@@ -258,5 +257,4 @@ class dilated_inception(nn.Module):
             x[i] = x[i][...,-x[-1].size(3):]
 
         x = torch.cat(x,dim=1)
-        print("x:",x.shape)
         return x
