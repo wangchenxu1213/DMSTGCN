@@ -101,13 +101,16 @@ class DMSTGCN(nn.Module):
             new_dilation = 1
             for i in range(layers):
                 # dilated convolutions
-                self.filter_convs.append(nn.Conv2d(in_channels=residual_channels,
-                                                   out_channels=dilation_channels,
-                                                   kernel_size=(1, kernel_size), dilation=new_dilation))
+#                 self.filter_convs.append(nn.Conv2d(in_channels=residual_channels,
+#                                                    out_channels=dilation_channels,
+#                                                    kernel_size=(1, kernel_size), dilation=new_dilation))
 
-                self.gate_convs.append(nn.Conv1d(in_channels=residual_channels,
-                                                 out_channels=dilation_channels,
-                                                 kernel_size=(1, kernel_size), dilation=new_dilation))
+#                 self.gate_convs.append(nn.Conv1d(in_channels=residual_channels,
+#                                                  out_channels=dilation_channels,
+#                                                  kernel_size=(1, kernel_size), dilation=new_dilation))
+
+                self.filter_convs.append(dilated_inception(residual_channels, dilation_channels, dilation_factor=new_dilation))
+                self.gate_convs.append(dilated_inception(residual_channels, dilation_channels,  dilation_factor=new_dilation))
 
                 self.residual_convs.append(nn.Conv1d(in_channels=dilation_channels,
                                                      out_channels=residual_channels,
@@ -117,13 +120,16 @@ class DMSTGCN(nn.Module):
                                                  out_channels=skip_channels,
                                                  kernel_size=(1, 1)))
 
-                self.filter_convs_a.append(nn.Conv2d(in_channels=residual_channels,
-                                                     out_channels=dilation_channels,
-                                                     kernel_size=(1, kernel_size), dilation=new_dilation))
+#                 self.filter_convs_a.append(nn.Conv2d(in_channels=residual_channels,
+#                                                      out_channels=dilation_channels,
+#                                                      kernel_size=(1, kernel_size), dilation=new_dilation))
 
-                self.gate_convs_a.append(nn.Conv1d(in_channels=residual_channels,
-                                                   out_channels=dilation_channels,
-                                                   kernel_size=(1, kernel_size), dilation=new_dilation))
+#                 self.gate_convs_a.append(nn.Conv1d(in_channels=residual_channels,
+#                                                    out_channels=dilation_channels,
+#                                                    kernel_size=(1, kernel_size), dilation=new_dilation))
+
+                self.filter_convs_a.append(dilated_inception(residual_channels, dilation_channels, dilation_factor=new_dilation))
+                self.gate_convs_a.append(dilated_inception(residual_channels, dilation_channels, dilation_factor=new_dilation))
 
                 # 1x1 convolution for residual connection
                 self.residual_convs_a.append(nn.Conv1d(in_channels=dilation_channels,
@@ -231,4 +237,26 @@ class DMSTGCN(nn.Module):
         x = F.relu(skip)
         x = F.relu(self.end_conv_1(x))
         x = self.end_conv_2(x)
+        return x
+
+class dilated_inception(nn.Module):
+    def __init__(self, cin, cout, dilation_factor=2):
+        super(dilated_inception, self).__init__()
+        self.tconv = nn.ModuleList()
+        self.kernel_set = [2,2,2,2]
+        cout = int(cout/len(self.kernel_set))
+        print("cout:",cout)
+        for kern in self.kernel_set:
+            self.tconv.append(nn.Conv2d(cin,cout,(1,kern),dilation=(1,dilation_factor)))
+
+    def forward(self,input):
+        x = []
+        for i in range(len(self.kernel_set)):
+            x.append(self.tconv[i](input))
+
+        for i in range(len(self.kernel_set)):
+            x[i] = x[i][...,-x[-1].size(3):]
+
+        x = torch.cat(x,dim=1)
+        print("x:",x.shape)
         return x
