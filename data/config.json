@@ -6,7 +6,7 @@
     "normalization": "batch"
   },
   "PEMSD8": {
-    "data_dir": "data/PEMSD8",
+    "data_dir": "/kaggle/input/pemsd8/PEMSD8",
     "num_nodes": 170,
     "num_slots": 288,
     "normalization": "batch"
