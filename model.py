@@ -243,7 +243,7 @@ class dilated_inception(nn.Module):
     def __init__(self, cin, cout, dilation_factor=2):
         super(dilated_inception, self).__init__()
         self.tconv = nn.ModuleList()
-        self.kernel_set = [2,2,2,2]
+        self.kernel_set = [1,2,1,2]
         cout = int(cout/len(self.kernel_set))
         for kern in self.kernel_set:
             self.tconv.append(nn.Conv2d(cin,cout,(1,kern),dilation=(1,dilation_factor)))
